@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team To-Do Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            transition: background 0.3s;
+        }
+
+        .leader-theme {
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b35 100%);
+        }
+
+        .member-theme {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        }
+
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .auth-container::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            bottom: -100px;
+            left: -100px;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-30px) translateX(30px); }
+        }
+
+        .role-selection {
+            display: flex;
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .auth-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            z-index: 1;
+        }
+
+        .auth-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+
+        .auth-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #ff6b35, #ff9a56, #ffd93d);
+        }
+
+        .auth-box.member-box::before {
+            background: linear-gradient(90deg, #22c55e, #4ade80, #86efac);
+        }
+
+        .auth-box h2 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .role-icon {
+            text-align: center;
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .role-subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .auth-box.leader-box .form-group input:focus,
+        .auth-box.leader-box .form-group select:focus {
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .auth-box.member-box .form-group input:focus,
+        .auth-box.member-box .form-group select:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+        }
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .password-toggle input {
+            padding-right: 45px;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 10px;
+            top: 12px;
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .leader-box .toggle-btn {
+            color: #ff6b35;
+        }
+
+        .member-box .toggle-btn {
+            color: #22c55e;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .leader-box .btn-primary {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff4500 100%);
+        }
+
+        .member-box .btn-primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .leader-badge {
+            background: #ff9a56;
+            color: white;
+        }
+
+        .member-badge {
+            background: #4ade80;
+            color: white;
+        }
+
+        .notifications {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .notification {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .notification.success {
+            background: #d1fae5;
+            border-left: 4px solid #22c55e;
+        }
+
+        .notification.warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .notification.error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+
+        .notification.info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .create-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .input-method {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .method-btn {
+            flex: 1;
+            padding: 20px;
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .method-btn:hover {
+            border-color: #667eea;
+        }
+
+        .method-btn.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .voice-control {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .mic-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .mic-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .mic-btn.listening {
+            animation: pulse 1.5s infinite;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3); }
+            50% { transform: scale(1.1); box-shadow: 0 15px 40px rgba(239, 68, 68, 0.5); }
+        }
+
+        .assignment-type {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .type-btn.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .todo-list {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .todo-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            background: #f9fafb;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .todo-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .todo-item.completed {
+            border-left-color: #22c55e;
+            opacity: 0.8;
+        }
+
+        .todo-item.delayed {
+            border-left-color: #ef4444;
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .todo-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .todo-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #22c55e;
+        }
+
+        .status-delayed {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .member-select {
+            margin: 15px 0;
+        }
+
+        .member-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .member-chip {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background: #e0e7ff;
+            color: #4338ca;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .member-chip:hover {
+            background: #c7d2fe;
+        }
+
+        .member-chip.selected {
+            background: #4338ca;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .time-info {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .complete-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #22c55e;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .complete-btn:hover {
+            background: #16a34a;
+        }
+
+        .complete-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .datetime-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .voice-data-display {
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+        }
+
+        .voice-data-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .voice-data-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e7ff;
+            color: #333;
+        }
+
+        .voice-data-item:last-child {
+            border-bottom: none;
+        }
+
+        .voice-commands {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fef3c7;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .voice-commands strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // Data storage
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        let todos = JSON.parse(localStorage.getItem('todos') || '[]');
+        let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+
+        // Voice assistant state
+        let isListening = false;
+        let recognition = null;
+        let voiceData = {
+            title: '',
+            description: '',
+            date: '',
+            time: '',
+            members: [],
+            mode: 'listening'
+        };
+
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+        }
+
+        // Text-to-speech function
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Cancel any ongoing speech
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('users', JSON.stringify(users));
+            localStorage.setItem('todos', JSON.stringify(todos));
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+        }
+
+        function addNotification(userId, message, type = 'info') {
+            notifications.push({
+                id: Date.now(),
+                userId,
+                message,
+                type,
+                timestamp: new Date().toISOString(),
+                read: false
+            });
+            saveData();
+        }
+
+        function checkDeadlines() {
+            const now = new Date();
+            todos.forEach(todo => {
+                if (!todo.completed && !todo.notified) {
+                    const deadline = new Date(todo.deadline);
+                    if (now > deadline) {
+                        if (todo.assignedTo === 'team') {
+                            todo.members.forEach(memberId => {
+                                const member = users.find(u => u.id === memberId);
+                                if (member) {
+                                    addNotification(memberId, `Your list "${todo.title}" is not yet finished. Please meet the team leader tomorrow.`, 'error');
+                                }
+                            });
+                            addNotification(todo.createdBy, `Your team members have not finished the list "${todo.title}".`, 'warning');
+                        } else {
+                            const member = users.find(u => u.id === todo.members[0]);
+                            if (member) {
+                                addNotification(todo.members[0], `Your list "${todo.title}" is not yet finished. Please meet the team leader tomorrow.`, 'error');
+                            }
+                            addNotification(todo.createdBy, `Team member has not finished the list "${todo.title}".`, 'warning');
+                        }
+                        todo.notified = true;
+                    }
+                }
+            });
+            saveData();
+        }
+
+        setInterval(checkDeadlines, 60000);
+
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (!currentUser) {
+                app.innerHTML = renderAuth();
+            } else {
+                document.body.className = currentUser.role === 'leader' ? 'leader-theme' : 'member-theme';
+                app.innerHTML = renderDashboard();
+            }
+        }
+
+        function renderAuth() {
+            return `
+                <div class="auth-container">
+                    <div class="role-selection">
+                        <div class="auth-box leader-box">
+                            <div class="role-icon">👔</div>
+                            <h2>Team Leader</h2>
+                            <div class="role-subtitle">Manage your team and create tasks</div>
+                            <div id="leaderAuthForm">
+                                ${renderLeaderLoginForm()}
+                            </div>
+                        </div>
+                        <div class="auth-box member-box">
+                            <div class="role-icon">👤</div>
+                            <h2>Team Member</h2>
+                            <div class="role-subtitle">View and complete your assigned tasks</div>
+                            <div id="memberAuthForm">
+                                ${renderMemberLoginForm()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLeaderLoginForm() {
+            return `
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="leaderEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group password-toggle">
+                    <label>Password</label>
+                    <input type="password" id="leaderPassword" placeholder="Enter your password">
+                    <button class="toggle-btn" onclick="togglePassword('leaderPassword')">Show</button>
+                </div>
+                <button class="btn btn-primary" onclick="handleLeaderLogin()">Login as Leader</button>
+                <button class="btn btn-secondary" onclick="switchLeaderToSignup()">Create Leader Account</button>
+            `;
+        }
+
+        function renderMemberLoginForm() {
+            return `
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="memberEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group password-toggle">
+                    <label>Password</label>
+                    <input type="password" id="memberPassword" placeholder="Enter your password">
+                    <button class="toggle-btn" onclick="togglePassword('memberPassword')">Show</button>
+                </div>
+                <button class="btn btn-primary" onclick="handleMemberLogin()">Login as Member</button>
+                <button class="btn btn-secondary" onclick="switchMemberToSignup()">Create Member Account</button>
+            `;
+        }
+
+        function renderLeaderSignupForm() {
+            return `
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="leaderUsername" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="leaderSignupEmail" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="leaderGender">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group password-toggle">
+                    <label>Password</label>
+                    <input type="password" id="leaderSignupPassword" placeholder="Enter password">
+                    <button class="toggle-btn" onclick="togglePassword('leaderSignupPassword')">Show</button>
+                </div>
+                <button class="btn btn-primary" onclick="handleLeaderSignup()">Create Leader Account</button>
+                <button class="btn btn-secondary" onclick="switchLeaderToLogin()">Back to Login</button>
+            `;
+        }
+
+        function renderMemberSignupForm() {
+            return `
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="memberUsername" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="memberSignupEmail" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="memberGender">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group password-toggle">
+                    <label>Password</label>
+                    <input type="password" id="memberSignupPassword" placeholder="Enter password">
+                    <button class="toggle-btn" onclick="togglePassword('memberSignupPassword')">Show</button>
+                </div>
+                <button class="btn btn-primary" onclick="handleMemberSignup()">Create Member Account</button>
+                <button class="btn btn-secondary" onclick="switchMemberToLogin()">Back to Login</button>
+            `;
+        }
+
+        function renderDashboard() {
+            const userNotifications = notifications.filter(n => n.userId === currentUser.id).slice(-5);
+            const userTodos = currentUser.role === 'leader' 
+                ? todos.filter(t => t.createdBy === currentUser.id)
+                : todos.filter(t => t.members && t.members.includes(currentUser.id));
+
+            return `
+                <div class="dashboard">
+                    <div class="header">
+                        <h1>
+                            <span>📋</span>
+                            Team To-Do Manager
+                            <span class="role-badge ${currentUser.role}-badge">${currentUser.role === 'leader' ? 'Team Leader' : 'Team Member'}</span>
+                        </h1>
+                        <div>
+                            <span style="margin-right: 20px; font-weight: 600;">Welcome, ${currentUser.username}!</span>
+                            <button class="btn btn-secondary" onclick="handleLogout()" style="width: auto; padding: 10px 20px;">Logout</button>
+                        </div>
+                    </div>
+
+                    ${userNotifications.length > 0 ? `
+                        <div class="notifications">
+                            <h3 style="margin-bottom: 15px; color: #333;">📢 Notifications</h3>
+                            ${userNotifications.map(n => `
+                                <div class="notification ${n.type}">
+                                    <div>
+                                        <strong>${n.message}</strong>
+                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                            ${new Date(n.timestamp).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    ${currentUser.role === 'leader' ? `
+                        <div class="create-section">
+                            <h3 style="margin-bottom: 20px; color: #333;">✨ Create New To-Do List</h3>
+                            
+                            <div class="input-method">
+                                <div class="method-btn active" onclick="selectMethod('manual')" id="manualBtn">
+                                    <div style="font-size: 30px; margin-bottom: 10px;">✍️</div>
+                                    <div style="font-weight: 600;">Manual Input</div>
+                                </div>
+                                <div class="method-btn" onclick="selectMethod('voice')" id="voiceBtn">
+                                    <div style="font-size: 30px; margin-bottom: 10px;">🎤</div>
+                                    <div style="font-weight: 600;">Voice Assistant</div>
+                                </div>
+                            </div>
+
+                            <div id="manualInput">
+                                <div class="assignment-type">
+                                    <div class="type-btn active" onclick="selectType('team')" id="teamBtn">
+                                        <strong>👥 Team Members</strong>
+                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">Assign to all members</div>
+                                    </div>
+                                    <div class="type-btn" onclick="selectType('single')" id="singleBtn">
+                                        <strong>👤 Single Member</strong>
+                                        <div style="font-size: 12px; color: #666; margin-top: 5px;">Choose one member</div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Task Title</label>
+                                    <input type="text" id="taskTitle" placeholder="Enter task title">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Task Description</label>
+                                    <textarea id="taskDesc" placeholder="Enter task description"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Deadline</label>
+                                    <div class="datetime-input">
+                                        <input type="date" id="taskDate">
+                                        <input type="time" id="taskTime">
+                                    </div>
+                                </div>
+
+                                <div class="member-select" id="memberSelectContainer">
+                                    <label>Select Team Members</label>
+                                    <div class="member-chips" id="memberChips">
+                                        ${users.filter(u => u.role === 'member').map(m => `
+                                            <div class="member-chip" onclick="toggleMember('${m.id}')" data-member="${m.id}">
+                                                ${m.username}
+                                            </div>
+                                        `).join('')}
+                                        ${users.filter(u => u.role === 'member').length === 0 ? '<div style="color: #999;">No team members available</div>' : ''}
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary" onclick="createTodo()">Create To-Do List</button>
+                            </div>
+
+                            <div id="voiceInput" class="hidden">
+                                <div class="voice-control">
+                                    <button class="mic-btn" id="micBtn" onclick="toggleVoice()">🎤</button>
+                                    <div id="voiceStatus" style="margin-top: 20px; font-size: 18px; color: #333; font-weight: 600;">Click microphone to start voice assistant</div>
+                                    <div id="voiceText" style="margin-top: 15px; padding: 15px; background: #f0f4ff; border-radius: 10px; min-height: 60px; font-size: 14px; color: #666;"></div>
+                                    
+                                    <div class="voice-data-display" id="voiceDataDisplay">
+                                        <div class="voice-data-title">📋 Captured Information:</div>
+                                        <div id="voiceDataContent" style="color: #666;">No data captured yet. Start speaking commands!</div>
+                                    </div>
+
+                                    <div class="voice-commands">
+                                        <strong>💡 Voice Commands Guide:</strong>
+                                        • <strong>"Create list [name]"</strong> - Start a new task<br>
+                                        • <strong>"Description [text]"</strong> - Add task description<br>
+                                        • <strong>"Date tomorrow"</strong> / <strong>"Date next Monday"</strong> - Set date<br>
+                                        • <strong>"Time 3 PM"</strong> / <strong>"Time 15:30"</strong> - Set time<br>
+                                        • <strong>"Assign to [name]"</strong> - Add specific member<br>
+                                        • <strong>"All members"</strong> / <strong>"Everyone"</strong> - Assign to all<br>
+                                        • <strong>"Send"</strong> / <strong>"Create"</strong> / <strong>"Post"</strong> - Create the task<br>
+                                        • <strong>"Delete"</strong> / <strong>"Clear"</strong> - Clear current data<br>
+                                        • <strong>"Stop"</strong> - Stop voice assistant
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div class="todo-list">
+                        <h3 style="margin-bottom: 20px; color: #333;">
+                            ${currentUser.role === 'leader' ? '📝 Your Created Lists' : '✅ Your Assigned Tasks'}
+                        </h3>
+                        ${userTodos.length === 0 ? `
+                            <div style="text-align: center; padding: 40px; color: #999;">
+                                <div style="font-size: 60px; margin-bottom: 15px;">📭</div>
+                                <div>No tasks yet</div>
+                            </div>
+                        ` : userTodos.map(todo => renderTodoItem(todo)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTodoItem(todo) {
+            const deadline = new Date(todo.deadline);
+            const now = new Date();
+            const isOverdue = now > deadline && !todo.completed;
+            const completedLate = todo.completed && todo.completedAt && new Date(todo.completedAt) > deadline;
+            
+            let statusClass = 'status-pending';
+            let statusText = 'Pending';
+            
+            if (todo.completed) {
+                statusClass = completedLate ? 'status-delayed' : 'status-completed';
+                statusText = completedLate ? 'Completed Late' : 'Completed';
+            } else if (isOverdue) {
+                statusClass = 'status-delayed';
+                statusText = 'Overdue';
+            }
+
+            const assignedMembers = todo.members.map(id => {
+                const user = users.find(u => u.id === id);
+                return user ? user.username : 'Unknown';
+            }).join(', ');
+
+            return `
+                <div class="todo-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'delayed' : ''}">
+                    <div class="todo-header">
+                        <div class="todo-title">${todo.title}</div>
+                        <div class="todo-status ${statusClass}">${statusText}</div>
+                    </div>
+                    <div style="color: #666; margin: 10px 0;">${todo.description}</div>
+                    <div class="time-info">
+                        <div>⏰ Deadline: ${deadline.toLocaleString()}</div>
+                        ${todo.completed ? `<div>✅ Completed: ${new Date(todo.completedAt).toLocaleString()}</div>` : ''}
+                    </div>
+                    <div style="margin-top: 10px; color: #666;">
+                        <strong>Assigned to:</strong> ${assignedMembers}
+                    </div>
+                    ${currentUser.role === 'member' && !todo.completed && todo.members.includes(currentUser.id) ? `
+                        <button class="complete-btn" onclick="completeTodo('${todo.id}')">Mark as Complete</button>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Auth functions
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const btn = event.target;
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+
+        function switchLeaderToSignup() {
+            document.getElementById('leaderAuthForm').innerHTML = renderLeaderSignupForm();
+        }
+
+        function switchLeaderToLogin() {
+            document.getElementById('leaderAuthForm').innerHTML = renderLeaderLoginForm();
+        }
+
+        function switchMemberToSignup() {
+            document.getElementById('memberAuthForm').innerHTML = renderMemberSignupForm();
+        }
+
+        function switchMemberToLogin() {
+            document.getElementById('memberAuthForm').innerHTML = renderMemberLoginForm();
+        }
+
+        function handleLeaderSignup() {
+            const username = document.getElementById('leaderUsername').value.trim();
+            const email = document.getElementById('leaderSignupEmail').value.trim();
+            const gender = document.getElementById('leaderGender').value;
+            const password = document.getElementById('leaderSignupPassword').value;
+
+            if (!username || !email || !gender || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (users.find(u => u.email === email)) {
+                alert('Email already exists');
+                return;
+            }
+
+            const newUser = {
+                id: Date.now().toString(),
+                username,
+                email,
+                gender,
+                role: 'leader',
+                password
+            };
+
+            users.push(newUser);
+            saveData();
+            alert('Leader account created successfully! Please login.');
+            switchLeaderToLogin();
+        }
+
+        function handleMemberSignup() {
+            const username = document.getElementById('memberUsername').value.trim();
+            const email = document.getElementById('memberSignupEmail').value.trim();
+            const gender = document.getElementById('memberGender').value;
+            const password = document.getElementById('memberSignupPassword').value;
+
+            if (!username || !email || !gender || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (users.find(u => u.email === email)) {
+                alert('Email already exists');
+                return;
+            }
+
+            // REMOVED 5 member limit - can add unlimited members now
+            const newUser = {
+                id: Date.now().toString(),
+                username,
+                email,
+                gender,
+                role: 'member',
+                password
+            };
+
+            users.push(newUser);
+            saveData();
+            alert('Member account created successfully! Please login.');
+            switchMemberToLogin();
+        }
+
+        function handleLeaderLogin() {
+            const email = document.getElementById('leaderEmail').value.trim();
+            const password = document.getElementById('leaderPassword').value;
+
+            const user = users.find(u => u.email === email && u.password === password && u.role === 'leader');
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                render();
+            } else {
+                alert('Invalid email or password, or account is not a team leader');
+            }
+        }
+
+        function handleMemberLogin() {
+            const email = document.getElementById('memberEmail').value.trim();
+            const password = document.getElementById('memberPassword').value;
+
+            const user = users.find(u => u.email === email && u.password === password && u.role === 'member');
+
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                render();
+            } else {
+                alert('Invalid email or password, or account is not a team member');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            render();
+        }
+
+        // Task management
+        let selectedMembers = [];
+        let assignmentType = 'team';
+        let inputMethod = 'manual';
+
+        function selectMethod(method) {
+            inputMethod = method;
+            document.getElementById('manualBtn').classList.toggle('active', method === 'manual');
+            document.getElementById('voiceBtn').classList.toggle('active', method === 'voice');
+            document.getElementById('manualInput').classList.toggle('hidden', method !== 'manual');
+            document.getElementById('voiceInput').classList.toggle('hidden', method !== 'voice');
+        }
+
+        function selectType(type) {
+            assignmentType = type;
+            document.getElementById('teamBtn').classList.toggle('active', type === 'team');
+            document.getElementById('singleBtn').classList.toggle('active', type === 'single');
+            
+            if (type === 'team') {
+                // Automatically select ALL members when Team Members is clicked
+                const allMemberIds = users.filter(u => u.role === 'member').map(u => u.id);
+                selectedMembers = [...allMemberIds];
+                document.querySelectorAll('.member-chip').forEach(chip => {
+                    chip.classList.add('selected');
+                });
+            } else {
+                // For single member, clear selections
+                selectedMembers = [];
+                document.querySelectorAll('.member-chip').forEach(chip => {
+                    chip.classList.remove('selected');
+                });
+            }
+        }
+
+        function toggleMember(memberId) {
+            if (assignmentType === 'single') {
+                selectedMembers = [memberId];
+                document.querySelectorAll('.member-chip').forEach(chip => {
+                    chip.classList.toggle('selected', chip.dataset.member === memberId);
+                });
+            } else {
+                // For team assignment, toggle individual members
+                const index = selectedMembers.indexOf(memberId);
+                if (index > -1) {
+                    selectedMembers.splice(index, 1);
+                } else {
+                    selectedMembers.push(memberId);
+                }
+                event.target.classList.toggle('selected');
+            }
+        }
+
+        function createTodo() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDesc').value.trim();
+            const date = document.getElementById('taskDate').value;
+            const time = document.getElementById('taskTime').value;
+
+            if (!title || !description || !date || !time || selectedMembers.length === 0) {
+                alert('Please fill in all fields and select at least one member');
+                return;
+            }
+
+            const deadline = new Date(`${date}T${time}`);
+            const now = new Date();
+
+            if (deadline <= now) {
+                alert('Deadline must be in the future');
+                return;
+            }
+
+            const newTodo = {
+                id: Date.now().toString(),
+                title,
+                description,
+                deadline: deadline.toISOString(),
+                createdBy: currentUser.id,
+                members: [...selectedMembers],
+                assignedTo: assignmentType,
+                completed: false,
+                notified: false,
+                createdAt: new Date().toISOString()
+            };
+
+            todos.push(newTodo);
+            
+            addNotification(currentUser.id, `List "${title}" has been created successfully!`, 'success');
+            
+            selectedMembers.forEach(memberId => {
+                const member = users.find(u => u.id === memberId);
+                if (member) {
+                    addNotification(memberId, `A new task "${title}" has been assigned to you by ${currentUser.username}. Please finish before ${deadline.toLocaleString()}.`, 'info');
+                }
+            });
+
+            saveData();
+            
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDesc').value = '';
+            document.getElementById('taskDate').value = '';
+            document.getElementById('taskTime').value = '';
+            selectedMembers = [];
+            document.querySelectorAll('.member-chip').forEach(chip => chip.classList.remove('selected'));
+
+            render();
+            alert('To-Do list created successfully!');
+        }
+
+        function completeTodo(todoId) {
+            const todo = todos.find(t => t.id === todoId);
+            if (!todo) return;
+
+            const now = new Date();
+            const deadline = new Date(todo.deadline);
+            const isLate = now > deadline;
+
+            todo.completed = true;
+            todo.completedAt = now.toISOString();
+            todo.completedBy = currentUser.id;
+
+            if (isLate) {
+                addNotification(currentUser.id, `You finished the list "${todo.title}" but it was delayed.`, 'warning');
+                addNotification(todo.createdBy, `${currentUser.username} finished the list "${todo.title}" but it was delayed.`, 'warning');
+            } else {
+                addNotification(currentUser.id, `List "${todo.title}" finished successfully!`, 'success');
+                addNotification(todo.createdBy, `${currentUser.username} finished the list "${todo.title}" successfully!`, 'success');
+            }
+
+            saveData();
+            render();
+        }
+
+        // Voice Assistant Functions
+        function toggleVoice() {
+            if (!recognition) {
+                alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+
+            const micBtn = document.getElementById('micBtn');
+            const voiceStatus = document.getElementById('voiceStatus');
+            const voiceText = document.getElementById('voiceText');
+
+            if (!isListening) {
+                isListening = true;
+                micBtn.classList.add('listening');
+                voiceStatus.textContent = '🎤 Listening... I\'m ready for your commands!';
+                voiceText.textContent = 'Waiting for speech...';
+                speak('Voice assistant activated. How can I help you?');
+
+                recognition.start();
+
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    voiceText.textContent = finalTranscript || interimTranscript;
+
+                    if (finalTranscript) {
+                        processVoiceCommand(finalTranscript.trim());
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Voice recognition error:', event.error);
+                    if (event.error === 'no-speech') {
+                        voiceStatus.textContent = '🔇 No speech detected. Keep speaking or say "stop" to end.';
+                    } else if (event.error === 'network') {
+                        voiceStatus.textContent = '🌐 Network error. Please check your connection.';
+                        micBtn.classList.remove('listening');
+                        isListening = false;
+                    } else {
+                        voiceStatus.textContent = '❌ Error: ' + event.error;
+                    }
+                };
+
+                recognition.onend = () => {
+                    if (isListening) {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.error('Error restarting recognition:', e);
+                            micBtn.classList.remove('listening');
+                            isListening = false;
+                            voiceStatus.textContent = '🎤 Click microphone to start';
+                        }
+                    } else {
+                        micBtn.classList.remove('listening');
+                        voiceStatus.textContent = '🎤 Click microphone to start';
+                    }
+                };
+            } else {
+                recognition.stop();
+                isListening = false;
+                micBtn.classList.remove('listening');
+                voiceStatus.textContent = '🎤 Voice assistant stopped. Click to restart.';
+                speak('Voice assistant deactivated.');
+            }
+        }
+
+        function updateVoiceDataDisplay() {
+            const voiceDataContent = document.getElementById('voiceDataContent');
+            if (!voiceDataContent) return;
+
+            let html = '';
+            
+            if (voiceData.title) {
+                html += `<div class="voice-data-item"><strong>📝 Title:</strong> ${voiceData.title}</div>`;
+            }
+            if (voiceData.description) {
+                html += `<div class="voice-data-item"><strong>📄 Description:</strong> ${voiceData.description}</div>`;
+            }
+            if (voiceData.date) {
+                html += `<div class="voice-data-item"><strong>📅 Date:</strong> ${voiceData.date}</div>`;
+            }
+            if (voiceData.time) {
+                html += `<div class="voice-data-item"><strong>⏰ Time:</strong> ${voiceData.time}</div>`;
+            }
+            if (voiceData.members.length > 0) {
+                const memberNames = voiceData.members.map(id => {
+                    const user = users.find(u => u.id === id);
+                    return user ? user.username : 'Unknown';
+                }).join(', ');
+                html += `<div class="voice-data-item"><strong>👥 Members:</strong> ${memberNames}</div>`;
+            }
+
+            voiceDataContent.innerHTML = html || 'No data captured yet. Start speaking commands!';
+        }
+
+        function parseDate(dateStr) {
+            const lower = dateStr.toLowerCase();
+            const today = new Date();
+            
+            if (lower.includes('today')) {
+                return today.toISOString().split('T')[0];
+            }
+            if (lower.includes('tomorrow')) {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                return tomorrow.toISOString().split('T')[0];
+            }
+            
+            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            for (let i = 0; i < days.length; i++) {
+                if (lower.includes(days[i])) {
+                    const targetDay = i;
+                    const currentDay = today.getDay();
+                    let daysToAdd = targetDay - currentDay;
+                    if (daysToAdd <= 0) daysToAdd += 7;
+                    const targetDate = new Date(today);
+                    targetDate.setDate(today.getDate() + daysToAdd);
+                    return targetDate.toISOString().split('T')[0];
+                }
+            }
+            
+            const datePatterns = [
+                /(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/,
+                /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,
+            ];
+            
+            for (const pattern of datePatterns) {
+                const match = dateStr.match(pattern);
+                if (match) {
+                    let year, month, day;
+                    if (match[0].startsWith('2')) {
+                        year = match[1];
+                        month = match[2].padStart(2, '0');
+                        day = match[3].padStart(2, '0');
+                    } else {
+                        month = match[1].padStart(2, '0');
+                        day = match[2].padStart(2, '0');
+                        year = match[3] || today.getFullYear();
+                    }
+                    return `${year}-${month}-${day}`;
+                }
+            }
+            
+            return null;
+        }
+
+        function parseTime(timeStr) {
+            const lower = timeStr.toLowerCase().trim();
+            
+            const time12Pattern = /(\d{1,2})(?::(\d{2}))?\s*(am|pm)/i;
+            const match12 = lower.match(time12Pattern);
+            
+            if (match12) {
+                let hours = parseInt(match12[1]);
+                const minutes = match12[2] || '00';
+                const meridiem = match12[3].toLowerCase();
+                
+                if (meridiem === 'pm' && hours !== 12) hours += 12;
+                if (meridiem === 'am' && hours === 12) hours = 0;
+                
+                return `${hours.toString().padStart(2, '0')}:${minutes}`;
+            }
+            
+            const time24Pattern = /(\d{1,2}):(\d{2})/;
+            const match24 = lower.match(time24Pattern);
+            
+            if (match24) {
+                const hours = match24[1].padStart(2, '0');
+                const minutes = match24[2];
+                return `${hours}:${minutes}`;
+            }
+            
+            const hoursPattern = /(\d{1,2})\s*o'?clock/i;
+            const matchHours = lower.match(hoursPattern);
+            
+            if (matchHours) {
+                let hours = parseInt(matchHours[1]);
+                if (hours < 8) hours += 12;
+                return `${hours.toString().padStart(2, '0')}:00`;
+            }
+            
+            return null;
+        }
+
+        function findMemberByName(name) {
+            const lower = name.toLowerCase().trim();
+            return users.find(u => 
+                u.role === 'member' && 
+                (u.username.toLowerCase().includes(lower) || lower.includes(u.username.toLowerCase()))
+            );
+        }
+
+        function processVoiceCommand(transcript) {
+            const voiceStatus = document.getElementById('voiceStatus');
+            const lower = transcript.toLowerCase().trim();
+            
+            console.log('Processing command:', transcript);
+
+            // Stop/Cancel commands
+            if (lower.includes('stop') || lower.includes('cancel')) {
+                voiceStatus.textContent = '🛑 Voice assistant stopped';
+                speak('Stopping voice assistant');
+                recognition.stop();
+                isListening = false;
+                return;
+            }
+
+            // Delete/Clear command
+            if (lower.includes('delete') || lower.includes('clear') || lower.includes('reset')) {
+                voiceData = {
+                    title: '',
+                    description: '',
+                    date: '',
+                    time: '',
+                    members: [],
+                    mode: 'listening'
+                };
+                voiceStatus.textContent = '🗑️ All data cleared';
+                speak('All data has been cleared. You can start fresh now.');
+                updateVoiceDataDisplay();
+                return;
+            }
+
+            // Send/Create/Post command
+            if (lower.includes('send it') || lower.includes('send') || lower.includes('create it') || 
+                lower.includes('post it') || lower.includes('create') || lower.includes('post')) {
+                createTodoFromVoice();
+                return;
+            }
+
+            // Create list command
+            const createPatterns = [
+                /create (?:a )?list (?:called |named )?(.+)/i,
+                /create (?:a )?(?:task|todo) (?:called |named )?(.+)/i,
+                /new list (?:called |named )?(.+)/i,
+                /make (?:a )?list (?:called |named )?(.+)/i,
+            ];
+
+            for (const pattern of createPatterns) {
+                const match = transcript.match(pattern);
+                if (match) {
+                    voiceData.title = match[1].trim().replace(/description.*$/i, '').trim();
+                    voiceStatus.textContent = `✅ List created: "${voiceData.title}"`;
+                    speak(`List ${voiceData.title} created. What's the description?`);
+                    updateVoiceDataDisplay();
+                    return;
+                }
+            }
+
+            // Description command
+            const descPatterns = [
+                /description (?:is )?(.+)/i,
+                /details (?:are )?(.+)/i,
+                /about (.+)/i,
+            ];
+
+            for (const pattern of descPatterns) {
+                const match = transcript.match(pattern);
+                if (match) {
+                    voiceData.description = match[1].trim().replace(/date.*$/i, '').trim();
+                    voiceStatus.textContent = `✅ Description added`;
+                    speak('Description added. What\'s the deadline date?');
+                    updateVoiceDataDisplay();
+                    return;
+                }
+            }
+
+            // Date command
+            const datePatterns = [
+                /date (?:is )?(.+)/i,
+                /deadline (?:is )?(.+)/i,
+                /due (?:date )?(?:is )?(.+)/i,
+                /(today|tomorrow|next \w+)/i,
+                /(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?)/,
+            ];
+
+            for (const pattern of datePatterns) {
+                const match = transcript.match(pattern);
+                if (match) {
+                    const dateStr = match[1] || match[0];
+                    const parsedDate = parseDate(dateStr);
+                    if (parsedDate) {
+                        voiceData.date = parsedDate;
+                        voiceStatus.textContent = `✅ Date set to ${parsedDate}`;
+                        speak(`Date set to ${parsedDate}. What time?`);
+                        updateVoiceDataDisplay();
+                        return;
+                    }
+                }
+            }
+
+            // Time command
+            const timePatterns = [
+                /time (?:is )?(.+)/i,
+                /at (.+)/i,
+                /(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i,
+                /(\d{1,2}:\d{2})/,
+            ];
+
+            for (const pattern of timePatterns) {
+                const match = transcript.match(pattern);
+                if (match) {
+                    const timeStr = match[1] || match[0];
+                    const parsedTime = parseTime(timeStr);
+                    if (parsedTime) {
+                        voiceData.time = parsedTime;
+                        voiceStatus.textContent = `✅ Time set to ${parsedTime}`;
+                        speak(`Time set to ${parsedTime}. Who should I assign this to?`);
+                        updateVoiceDataDisplay();
+                        return;
+                    }
+                }
+            }
+
+            // Member assignment - select all
+            if (lower.includes('all members') || lower.includes('all member') || lower.includes('everyone') || 
+                lower.includes('whole team') || lower.includes('entire team') || lower.includes('every member')) {
+                const allMembers = users.filter(u => u.role === 'member');
+                voiceData.members = allMembers.map(m => m.id);
+                assignmentType = 'team';
+                voiceStatus.textContent = `✅ Assigned to all ${allMembers.length} team members`;
+                speak(`Assigned to all ${allMembers.length} team members. Say send to create the task.`);
+                updateVoiceDataDisplay();
+                return;
+            }
+
+            // Member assignment - individual
+            const memberPatterns = [
+                /assign (?:to |it to )?(\w+)/i,
+                /add (\w+)/i,
+                /give (?:to |it to )?(\w+)/i,
+                /member (\w+)/i,
+            ];
+
+            for (const pattern of memberPatterns) {
+                const match = transcript.match(pattern);
+                if (match) {
+                    const memberName = match[1];
+                    const member = findMemberByName(memberName);
+                    if (member) {
+                        if (!voiceData.members.includes(member.id)) {
+                            voiceData.members.push(member.id);
+                            voiceStatus.textContent = `✅ Added ${member.username} to the task`;
+                            speak(`${member.username} added. Add more members or say send to create.`);
+                            updateVoiceDataDisplay();
+                        } else {
+                            voiceStatus.textContent = `ℹ️ ${member.username} is already assigned`;
+                            speak(`${member.username} is already assigned to this task.`);
+                        }
+                        return;
+                    } else {
+                        voiceStatus.textContent = `❌ Member "${memberName}" not found`;
+                        speak(`I couldn't find a member named ${memberName}. Please try again.`);
+                        return;
+                    }
+                }
+            }
+
+            voiceStatus.textContent = `❓ Command not recognized. Please try again.`;
+        }
+
+        function createTodoFromVoice() {
+            const voiceStatus = document.getElementById('voiceStatus');
+
+            if (!voiceData.title) {
+                voiceStatus.textContent = '❌ Error: No task title specified';
+                speak('Please create a list first by saying create list followed by the name.');
+                return;
+            }
+
+            if (!voiceData.date || !voiceData.time) {
+                voiceStatus.textContent = '❌ Error: Date and time required';
+                speak('Please specify both date and time for the deadline.');
+                return;
+            }
+
+            if (voiceData.members.length === 0) {
+                voiceStatus.textContent = '❌ Error: No members assigned';
+                speak('Please assign at least one team member or say all members.');
+                return;
+            }
+
+            const deadline = new Date(`${voiceData.date}T${voiceData.time}`);
+            const now = new Date();
+
+            if (deadline <= now) {
+                voiceStatus.textContent = '❌ Error: Deadline must be in the future';
+                speak('The deadline must be in the future. Please set a new date and time.');
+                return;
+            }
+
+            const newTodo = {
+                id: Date.now().toString(),
+                title: voiceData.title,
+                description: voiceData.description || voiceData.title,
+                deadline: deadline.toISOString(),
+                createdBy: currentUser.id,
+                members: [...voiceData.members],
+                assignedTo: voiceData.members.length > 1 ? 'team' : 'single',
+                completed: false,
+                notified: false,
+                createdAt: new Date().toISOString()
+            };
+
+            todos.push(newTodo);
+            
+            addNotification(currentUser.id, `List "${voiceData.title}" has been created successfully via voice!`, 'success');
+            
+            voiceData.members.forEach(memberId => {
+                const member = users.find(u => u.id === memberId);
+                if (member) {
+                    addNotification(memberId, `A new task "${voiceData.title}" has been assigned to you by ${currentUser.username}. Please finish before ${deadline.toLocaleString()}.`, 'info');
+                }
+            });
+
+            saveData();
+            
+            voiceStatus.textContent = `✅ Task created successfully: "${voiceData.title}"`;
+            speak(`Task ${voiceData.title} has been created and assigned successfully. You can create another task or say stop.`);
+
+            voiceData = {
+                title: '',
+                description: '',
+                date: '',
+                time: '',
+                members: [],
+                mode: 'listening'
+            };
+            updateVoiceDataDisplay();
+
+            setTimeout(() => render(), 1000);
+        }
+
+        // Initial render
+        render();
+        checkDeadlines();
+    </script>
+</body>
+</html>
